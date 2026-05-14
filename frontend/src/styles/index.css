@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply font-sans text-gray-800 bg-white;
+    line-height: 1.5;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white font-semibold py-3 px-6 rounded hover:bg-primary-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary font-semibold py-3 px-6 rounded hover:bg-primary hover:text-white transition-colors duration-200;
+  }
+
+  .btn-ghost {
+    @apply text-gray-700 font-semibold py-3 px-6 rounded hover:bg-gray-100 transition-colors duration-200;
+  }
+
+  .product-card {
+    @apply bg-white rounded-lg overflow-hidden cursor-pointer;
+  }
+
+  .badge-discount {
+    @apply bg-primary text-white text-xs font-bold px-2 py-0.5 rounded;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Swiper overrides */
+.swiper-pagination-bullet-active {
+  background-color: #E31837 !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: #E31837 !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
