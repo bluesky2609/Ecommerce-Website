@@ -58,11 +58,11 @@ const AccountPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Họ tên</label>
-                    <input type="text" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} required className="w-full text-sm p-2.5 border border-gray-300 rounded focus:outline-none focus:border-primary" />
+                    <input type="text" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value.replace(/[^\p{L}\s]/gu, '') })} required className="w-full text-sm p-2.5 border border-gray-300 rounded focus:outline-none focus:border-primary" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Số điện thoại</label>
-                    <input type="text" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="w-full text-sm p-2.5 border border-gray-300 rounded focus:outline-none focus:border-primary" />
+                    <input type="text" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/\D/g, '') })} className="w-full text-sm p-2.5 border border-gray-300 rounded focus:outline-none focus:border-primary" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>

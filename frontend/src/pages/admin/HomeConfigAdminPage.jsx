@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { homeConfigService } from '../../services/homeConfigService.js'
+import ImageUploader from '../../components/admin/ImageUploader.jsx'
 
 /* ─── shared styles ─────────────────────────────────────────────────────── */
 const inputStyle = {
@@ -30,7 +31,7 @@ const cardStyle = {
   padding: '24px',
 }
 
-/* ─── Banner Modal ──────────────────────────────────────────────────────── */
+/* ─── Banner Modal ───────────────────────────────────────────────────── */
 const EMPTY_BANNER = {
   title: '',
   subtitle: '',
@@ -66,7 +67,7 @@ function BannerModal({ initial, onClose, onSaved }) {
         <div style={{ padding: '24px 28px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1f2937', margin: 0 }}>
-              {isEdit ? '✏️ Chỉnh sửa Banner' : '➕ Thêm Banner mới'}
+              {isEdit ? 'Chỉnh sửa Banner' : 'Thêm Banner mới'}
             </h2>
             <p style={{ fontSize: '13px', color: '#9ca3af', margin: '4px 0 0' }}>Tuỳ chỉnh nội dung và hình ảnh banner trang chủ</p>
           </div>
@@ -74,26 +75,15 @@ function BannerModal({ initial, onClose, onSaved }) {
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '24px 28px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Image URL */}
-          <div>
-            <label style={labelStyle}>URL Ảnh Banner *</label>
-            <input
-              style={inputStyle}
-              value={form.image}
-              onChange={e => { set('image', e.target.value); setPreview(e.target.value) }}
-              placeholder="https://example.com/banner.jpg (1400×600px khuyến nghị)"
-            />
-            {preview && (
-              <div style={{ marginTop: '10px', borderRadius: '8px', overflow: 'hidden', height: '140px', background: '#f3f4f6' }}>
-                <img
-                  src={preview}
-                  alt="Preview"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={e => { e.target.style.display = 'none' }}
-                />
-              </div>
-            )}
-          </div>
+          {/* Image */}
+          <ImageUploader
+            label="Ảnh Banner * (khuyến nghị 1400×600px)"
+            value={form.image}
+            onChange={url => { set('image', url); setPreview(url) }}
+            previewHeight={140}
+            inputId="banner-image-upload"
+            placeholder="https://example.com/banner.jpg"
+          />
 
           {/* Title & Subtitle */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -208,8 +198,8 @@ function BannerCard({ banner, index, total, onEdit, onDelete, onMoveUp, onMoveDo
             🔗 {banner.href}
           </span>
           {banner.isActive
-            ? <span style={{ fontSize: '11px', background: '#f0fdf4', color: '#16a34a', padding: '2px 8px', borderRadius: '20px', fontWeight: '600' }}>✓ Hiện</span>
-            : <span style={{ fontSize: '11px', background: '#f3f4f6', color: '#9ca3af', padding: '2px 8px', borderRadius: '20px', fontWeight: '600' }}>✗ Ẩn</span>
+            ? <span style={{ fontSize: '11px', background: '#f0fdf4', color: '#16a34a', padding: '2px 8px', borderRadius: '20px', fontWeight: '600' }}>Hiện</span>
+            : <span style={{ fontSize: '11px', background: '#f3f4f6', color: '#9ca3af', padding: '2px 8px', borderRadius: '20px', fontWeight: '600' }}>Ẩn</span>
           }
         </div>
       </div>

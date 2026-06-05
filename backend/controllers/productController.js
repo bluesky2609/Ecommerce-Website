@@ -190,7 +190,10 @@ exports.updateProduct = async (req, res, next) => {
 // @route DELETE /api/products/:id (admin)
 exports.deleteProduct = async (req, res, next) => {
   try {
-    await Product.findByIdAndUpdate(req.params.id, { isActive: false });
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
+    }
     res.json({ success: true, message: 'Đã xóa sản phẩm' });
   } catch (err) {
     next(err);

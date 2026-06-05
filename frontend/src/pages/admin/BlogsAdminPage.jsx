@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { adminService } from '../../services/adminService.js'
+import { uploadService } from '../../services/uploadService.js'
 
 const emptyForm = {
   title: '', excerpt: '', content: '', thumbnail: '',
@@ -16,6 +17,37 @@ const BlogsAdminPage = () => {
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [pagination, setPagination] = useState({ page: 1, total: 0 })
+  const [uploadingImage, setUploadingImage] = useState(false)
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Dung lượng ảnh vượt quá 10MB. Vui lòng chọn ảnh nhỏ hơn!')
+      return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Chỉ chấp nhận file hình ảnh (JPEG, PNG, WEBP, GIF)!')
+      return
+    }
+
+    setUploadingImage(true)
+    try {
+      const res = await uploadService.uploadImage(file)
+      if (res.success && res.url) {
+        setForm(p => ({ ...p, thumbnail: res.url }))
+      } else {
+        alert(res.message || 'Lỗi tải ảnh lên server')
+      }
+    } catch (err) {
+      alert(err.message || 'Lỗi kết nối khi tải ảnh lên')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   const load = async (page = 1) => {
     setLoading(true)
@@ -204,9 +236,117 @@ const BlogsAdminPage = () => {
                 <textarea value={form.content} onChange={e => setForm(p => ({ ...p, content: e.target.value }))} rows={6} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>URL ảnh bìa</label>
-                <input value={form.thumbnail} onChange={e => setForm(p => ({ ...p, thumbnail: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
-                {form.thumbnail && <img src={form.thumbnail} alt="preview" style={{ marginTop: '8px', width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px' }} onError={e => e.target.style.display = 'none'} />}
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Ảnh bìa bài viết</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {/* File upload area */}
+                  <div
+                    style={{
+                      border: '2px dashed #e5e7eb',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      background: '#f9fafb',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = '#E31837';
+                      e.currentTarget.style.background = '#fff5f6';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = '#e5e7eb';
+                      e.currentTarget.style.background = '#f9fafb';
+                    }}
+                    onClick={() => document.getElementById('thumbnail-file-input').click()}
+                  >
+                    <input
+                      type="file"
+                      id="thumbnail-file-input"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleFileChange}
+                    />
+                    {uploadingImage ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px' }}>
+                        <div style={{ width: '24px', height: '24px', border: '2.5px solid #f3f4f6', borderTop: '2.5px solid #E31837', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        <span style={{ fontSize: '13px', color: '#6b7280' }}>Đang tải ảnh lên...</span>
+                      </div>
+                    ) : form.thumbnail ? (
+                      <div style={{ position: 'relative' }}>
+                        <img src={form.thumbnail} alt="preview" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          right: '8px',
+                          background: 'rgba(0,0,0,0.6)',
+                          color: 'white',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                        }}>
+                          Nhấp để thay đổi ảnh
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setForm(p => ({ ...p, thumbnail: '' }));
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                            fontSize: '12px',
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#9ca3af" style={{ width: '36px', height: '36px' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+                        </svg>
+                        <span style={{ fontSize: '13px', color: '#4b5563', fontWeight: '500' }}>Tải ảnh lên từ máy tính</span>
+                        <span style={{ fontSize: '11px', color: '#9ca3af' }}>Hỗ trợ JPG, PNG, WEBP, GIF (Tối đa 10MB)</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Manual URL entry field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#9ca3af' }}>Hoặc nhập URL ảnh trực tiếp bên dưới:</span>
+                    <input
+                      placeholder="https://example.com/image.jpg"
+                      value={form.thumbnail}
+                      onChange={e => setForm(p => ({ ...p, thumbnail: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1.5px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#E31837'}
+                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Tags (phân cách bằng dấu phẩy)</label>

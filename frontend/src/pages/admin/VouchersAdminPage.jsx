@@ -179,7 +179,7 @@ function VoucherModal({ initial, onClose, onSaved }) {
           {/* Usage limit */}
           <div>
             <label style={labelStyle}>Số lần sử dụng tối đa</label>
-            <input style={inputStyle} type="number" min="0" value={form.usageLimit} onChange={e => set('usageLimit', e.target.value)} placeholder="0 = không giới hạn" />
+            <input style={inputStyle} type="number" min="0" value={form.usageLimit} onChange={e => set('usageLimit', e.target.value)} onKeyDown={(e) => { if (['e', 'E', '+', '-', '.'].includes(e.key)) e.preventDefault(); }} placeholder="0 = không giới hạn" />
           </div>
 
           {/* Dates */}

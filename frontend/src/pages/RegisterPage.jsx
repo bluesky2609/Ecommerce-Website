@@ -14,7 +14,13 @@ const RegisterPage = () => {
   const navigate = useNavigate()
 
   const handleChange = (e) => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    let val = e.target.value
+    if (e.target.name === 'name') {
+      val = val.replace(/[^\p{L}\s]/gu, '')
+    } else if (e.target.name === 'phone') {
+      val = val.replace(/\D/g, '')
+    }
+    setForm(f => ({ ...f, [e.target.name]: val }))
     if (errors[e.target.name]) {
       setErrors(errs => ({ ...errs, [e.target.name]: '' }))
     }

@@ -15,6 +15,7 @@ app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001', 'http:
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
+app.use('/api/uploads', express.static(require('path').join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -34,6 +35,8 @@ app.use('/api/admin/home-config', require('./routes/adminHomeConfig'));
 app.use('/api/vouchers', require('./routes/vouchers'));
 app.use('/api/home-config', require('./routes/homeConfig'));
 app.use('/api/payment', require('./routes/payment'));
+app.use('/api/upload', require('./routes/upload'));
+app.use('/api/chatbot', require('./routes/chatbot'));
 
 // Sync sold counts from real orders (admin)
 const { syncSold } = require('./controllers/reviewController');

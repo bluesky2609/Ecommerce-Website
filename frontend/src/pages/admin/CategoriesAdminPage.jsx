@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { adminService } from '../../services/adminService.js'
+import ImageUploader from '../../components/admin/ImageUploader.jsx'
 
 const emptyForm = {
   name: '', slug: '', description: '', image: '',
   parent: '', order: 0, isActive: true,
 }
+
+// Tạo slug từ tên tiếng Việt
+const toSlug = (str) =>
+  str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/[^a-z0-9\s-]/g, '')
+    .trim().replace(/\s+/g, '-')
 
 const CategoriesAdminPage = () => {
   const [categories, setCategories] = useState([])
@@ -51,14 +59,24 @@ const CategoriesAdminPage = () => {
     setShowModal(true)
   }
 
+  const handleNameChange = (val) => {
+    setForm(p => ({
+      ...p,
+      name: val,
+      slug: p.slug && p.slug !== toSlug(p.name) ? p.slug : toSlug(val),
+    }))
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     setSaving(true)
     try {
+      // Chuyển parent rỗng thành null để tránh lỗi ID không hợp lệ
+      const payload = { ...form, parent: form.parent || null }
       if (editing) {
-        await adminService.updateCategory(editing._id, form)
+        await adminService.updateCategory(editing._id, payload)
       } else {
-        await adminService.createCategory(form)
+        await adminService.createCategory(payload)
       }
       setShowModal(false)
       load()
@@ -205,29 +223,66 @@ const CategoriesAdminPage = () => {
             </div>
 
             <form onSubmit={handleSave} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {[
-                { label: 'Tên danh mục *', key: 'name', type: 'text', required: true },
-                { label: 'Đường dẫn (slug)', key: 'slug', type: 'text' },
-                { label: 'Mô tả', key: 'description', type: 'text' },
-                { label: 'URL hình ảnh', key: 'image', type: 'text' },
-                { label: 'Thứ tự', key: 'order', type: 'number' },
-              ].map(f => (
-                <div key={f.key}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>{f.label}</label>
-                  <input
-                    type={f.type}
-                    required={f.required}
-                    value={form[f.key]}
-                    onChange={e => setForm(p => ({ ...p, [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value }))}
-                    style={{
-                      width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb',
-                      borderRadius: '8px', fontSize: '14px', color: '#1f2937', outline: 'none', boxSizing: 'border-box',
-                    }}
-                    onFocus={e => e.target.style.borderColor = '#E31837'}
-                    onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-                  />
-                </div>
-              ))}
+              {/* Tên danh mục */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Tên danh mục *</label>
+                <input
+                  type="text" required
+                  value={form.name}
+                  onChange={e => handleNameChange(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#1f2937', outline: 'none', boxSizing: 'border-box' }}
+                  onFocus={e => e.target.style.borderColor = '#E31837'}
+                  onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                />
+              </div>
+              {/* Slug */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Đường dẫn (slug)</label>
+                <input
+                  type="text"
+                  value={form.slug}
+                  onChange={e => setForm(p => ({ ...p, slug: e.target.value }))}
+                  placeholder="tu-dong-tao-tu-ten"
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#6b7280', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' }}
+                  onFocus={e => e.target.style.borderColor = '#E31837'}
+                  onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                />
+              </div>
+              {/* Mô tả */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Mô tả</label>
+                <input
+                  type="text"
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#1f2937', outline: 'none', boxSizing: 'border-box' }}
+                  onFocus={e => e.target.style.borderColor = '#E31837'}
+                  onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                />
+              </div>
+              {/* Hình ảnh danh mục */}
+              <div>
+                <ImageUploader
+                  label="Hình ảnh danh mục"
+                  value={form.image}
+                  onChange={url => setForm(p => ({ ...p, image: url }))}
+                  previewHeight={120}
+                  inputId="cat-image-upload"
+                  placeholder="https://example.com/category.jpg"
+                />
+              </div>
+              {/* Thứ tự */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Thứ tự</label>
+                <input
+                  type="number"
+                  value={form.order}
+                  onChange={e => setForm(p => ({ ...p, order: Number(e.target.value) }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#1f2937', outline: 'none', boxSizing: 'border-box' }}
+                  onFocus={e => e.target.style.borderColor = '#E31837'}
+                  onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                />
+              </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Danh mục cha</label>

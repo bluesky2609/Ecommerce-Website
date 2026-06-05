@@ -101,11 +101,11 @@ const AddressManager = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-gray-600 mb-1">Họ và tên</label>
-              <input type="text" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full text-sm p-2 border rounded" placeholder="Nhập họ tên" />
+              <input type="text" required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value.replace(/[^\p{L}\s]/gu, '')})} className="w-full text-sm p-2 border rounded" placeholder="Nhập họ tên" />
             </div>
             <div>
               <label className="block text-xs text-gray-600 mb-1">Số điện thoại</label>
-              <input type="text" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full text-sm p-2 border rounded" placeholder="Nhập số điện thoại" />
+              <input type="text" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className="w-full text-sm p-2 border rounded" placeholder="Nhập số điện thoại" />
             </div>
             <div>
               <label className="block text-xs text-gray-600 mb-1">Tỉnh / Thành phố</label>

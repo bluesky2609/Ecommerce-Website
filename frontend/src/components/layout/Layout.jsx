@@ -1,6 +1,7 @@
 import React from 'react'
 import Header from './Header.jsx'
 import Footer from './Footer.jsx'
+import ChatbotWidget from '../chatbot/ChatbotWidget.jsx'
 import { Toaster } from 'react-hot-toast'
 
 const Layout = ({ children }) => {
@@ -11,6 +12,7 @@ const Layout = ({ children }) => {
         {children}
       </main>
       <Footer />
+      <ChatbotWidget />
       <Toaster
         position="top-right"
         toastOptions={{
@@ -24,3 +26,4 @@ const Layout = ({ children }) => {
 }
 
 export default Layout
+

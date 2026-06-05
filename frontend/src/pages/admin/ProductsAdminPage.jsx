@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { adminService } from '../../services/adminService.js'
 import { categoryService } from '../../services/categoryService.js'
 import api from '../../services/api.js'
+import ImageUploader from '../../components/admin/ImageUploader.jsx'
 
 // Lấy tất cả sản phẩm (kể cả ẩn) cho trang admin
 const getAdminProducts = async (params) => {
@@ -39,6 +40,7 @@ const ProductsAdminPage = () => {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [priceError, setPriceError] = useState('')
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [page, setPage] = useState(1)
@@ -126,8 +128,41 @@ const ProductsAdminPage = () => {
     }, 0);
   }
 
+  // Tính % giảm giá tự động, làm tròn lên số nguyên gần nhất
+  const calcDiscount = (original, sale) => {
+    const o = Number(original)
+    const s = Number(sale)
+    if (!o || !s || o <= 0) return 0
+    return Math.ceil(((o - s) / o) * 100)
+  }
+
+  const handlePriceChange = (key, value) => {
+    setForm(prev => {
+      const next = { ...prev, [key]: value }
+      const o = key === 'originalPrice' ? Number(value) : Number(prev.originalPrice)
+      const s = key === 'salePrice' ? Number(value) : Number(prev.salePrice)
+      if (o > 0 && s > 0) {
+        if (s > o) {
+          setPriceError('Giá bán không được cao hơn giá gốc!')
+        } else {
+          setPriceError('')
+          next.discount = calcDiscount(o, s)
+        }
+      } else {
+        setPriceError('')
+      }
+      return next
+    })
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
+    const o = Number(form.originalPrice)
+    const s = Number(form.salePrice)
+    if (s > o) {
+      setPriceError('Giá bán không được cao hơn giá gốc!')
+      return
+    }
     setSaving(true)
     try {
       const payload = {
@@ -379,43 +414,126 @@ const ProductsAdminPage = () => {
               <div>
                 <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Giá & Số lượng</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
-                  {[
-                    { label: 'Giá gốc (đ) *', key: 'originalPrice', required: true },
-                    { label: 'Giá bán (đ) *', key: 'salePrice', required: true },
-                    { label: 'Giảm giá (%)', key: 'discount' },
-                    { label: 'Tồn kho *', key: 'countInStock', required: true },
-                  ].map(f => (
-                    <div key={f.key}>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{f.label}</label>
+                  {/* Giá gốc */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>Giá gốc (đ) *</label>
+                    <input
+                      type="number" min={0} required
+                      value={form.originalPrice}
+                      onChange={e => handlePriceChange('originalPrice', e.target.value)}
+                      style={inputStyle}
+                      onFocus={e => e.target.style.borderColor = '#E31837'}
+                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+                  {/* Giá bán */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: priceError ? '#ef4444' : '#6b7280', marginBottom: '6px' }}>Giá bán (đ) *</label>
+                    <input
+                      type="number" min={0} required
+                      value={form.salePrice}
+                      onChange={e => handlePriceChange('salePrice', e.target.value)}
+                      style={{ ...inputStyle, borderColor: priceError ? '#ef4444' : '#e5e7eb' }}
+                      onFocus={e => e.target.style.borderColor = priceError ? '#ef4444' : '#E31837'}
+                      onBlur={e => e.target.style.borderColor = priceError ? '#ef4444' : '#e5e7eb'}
+                    />
+                    {priceError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: '600' }}>{priceError}</p>}
+                  </div>
+                  {/* Giảm giá - tự động tính */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>Giảm giá (%)</label>
+                    <div style={{ position: 'relative' }}>
                       <input
-                        type="number" min={0} required={f.required}
-                        value={f.key === 'countInStock' && form.sizes ? computedTotalStock() : form[f.key]}
-                        onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                        readOnly={f.key === 'countInStock' && !!form.sizes}
-                        style={{ ...inputStyle, background: f.key === 'countInStock' && !!form.sizes ? '#f3f4f6' : 'white', cursor: f.key === 'countInStock' && !!form.sizes ? 'not-allowed' : 'text' }}
-                        onFocus={e => !(f.key === 'countInStock' && !!form.sizes) && (e.target.style.borderColor = '#E31837')}
-                        onBlur={e => !(f.key === 'countInStock' && !!form.sizes) && (e.target.style.borderColor = '#e5e7eb')}
+                        type="number" min={0} max={100}
+                        value={form.discount}
+                        readOnly
+                        style={{ ...inputStyle, background: '#f3f4f6', cursor: 'not-allowed', color: form.discount > 0 ? '#E31837' : '#9ca3af', fontWeight: form.discount > 0 ? '700' : '400' }}
                       />
+                      {form.discount > 0 && (
+                        <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', fontWeight: '700', color: '#E31837' }}>%</span>
+                      )}
                     </div>
-                  ))}
+                  </div>
+                  {/* Tồn kho */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>Tồn kho *</label>
+                    <input
+                      type="number" min={0} required
+                      value={form.sizes ? computedTotalStock() : form.countInStock}
+                      onChange={e => setForm(p => ({ ...p, countInStock: e.target.value }))}
+                      onKeyDown={(e) => { if (['e', 'E', '+', '-', '.'].includes(e.key)) e.preventDefault(); }}
+                      readOnly={!!form.sizes}
+                      style={{ ...inputStyle, background: !!form.sizes ? '#f3f4f6' : 'white', cursor: !!form.sizes ? 'not-allowed' : 'text' }}
+                      onFocus={e => !form.sizes && (e.target.style.borderColor = '#E31837')}
+                      onBlur={e => !form.sizes && (e.target.style.borderColor = '#e5e7eb')}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Images & Sizes */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>URLs hình ảnh (phân cách phẩy)</label>
-                  <textarea value={form.images} onChange={e => setForm(p => ({ ...p, images: e.target.value }))} rows={3} placeholder="https://..., https://..." style={{ ...inputStyle, resize: 'vertical' }} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
+              {/* Images */}
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Hình ảnh sản phẩm
                 </div>
+                {/* Multi-image list */}
+                {(() => {
+                  const urls = form.images ? form.images.split(',').map(u => u.trim()).filter(Boolean) : []
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {urls.map((url, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center', background: '#f9fafb', borderRadius: '10px', padding: '10px 14px', border: '1px solid #e5e7eb' }}>
+                          <img
+                            src={url}
+                            alt={`img-${i}`}
+                            style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                            onError={e => e.target.style.display = 'none'}
+                          />
+                          <span style={{ flex: 1, fontSize: '12px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = urls.filter((_, idx) => idx !== i)
+                              setForm(p => ({ ...p, images: next.join(', ') }))
+                            }}
+                            style={{ padding: '4px 10px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', flexShrink: 0 }}
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      ))}
+                      {/* Uploader for next image */}
+                      <ImageUploader
+                        label={urls.length === 0 ? 'Ảnh đầu tiên' : `Thêm ảnh #${urls.length + 1}`}
+                        value=""
+                        onChange={url => {
+                          if (!url) return
+                          setForm(p => ({
+                            ...p,
+                            images: p.images ? p.images.split(',').map(u => u.trim()).filter(Boolean).concat(url).join(', ') : url,
+                          }))
+                        }}
+                        previewHeight={120}
+                        inputId={`product-img-upload-${urls.length}`}
+                        placeholder="https://example.com/product.jpg"
+                      />
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Sizes & Tags */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Size có sẵn (phân cách phẩy)</label>
                   <input value={form.sizes} onChange={e => setForm(p => ({ ...p, sizes: e.target.value }))} placeholder="S, M, L, XL, XXL" style={inputStyle} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px', marginTop: '12px' }}>Tags (phân cách phẩy)</label>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Tags (phân cách phẩy)</label>
                   <input value={form.tags} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="áo, nam, cotton..." style={inputStyle} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
                 </div>
               </div>
-
-              {/* Colors */}
+              
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Màu sắc</div>
@@ -475,6 +593,7 @@ const ProductsAdminPage = () => {
                           });
                           setForm(p => ({ ...p, variants: newVariants }));
                         }}
+                        onKeyDown={(e) => { if (['e', 'E', '+', '-', '.'].includes(e.key)) e.preventDefault(); }}
                         style={{ width: '80px', padding: '4px 8px', border: '1.5px solid #e5e7eb', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
                         onFocus={e => e.target.style.borderColor = '#E31837'}
                         onBlur={e => e.target.style.borderColor = '#e5e7eb'}
@@ -512,6 +631,7 @@ const ProductsAdminPage = () => {
                                 }
                                 setForm(p => ({ ...p, variants: newVariants }));
                               }}
+                              onKeyDown={(e) => { if (['e', 'E', '+', '-', '.'].includes(e.key)) e.preventDefault(); }}
                               style={{ width: '70px', padding: '6px 10px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
                               onFocus={e => e.target.style.borderColor = '#E31837'}
                               onBlur={e => e.target.style.borderColor = '#e5e7eb'}
@@ -521,15 +641,6 @@ const ProductsAdminPage = () => {
                       });
                     })}
                   </div>
-                </div>
-              )}
-
-              {/* Image preview */}
-              {form.images && (
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {form.images.split(',').map(url => url.trim()).filter(Boolean).slice(0, 4).map((url, i) => (
-                    <img key={i} src={url} alt="" style={{ width: '72px', height: '72px', borderRadius: '8px', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
-                  ))}
                 </div>
               )}
 
