@@ -11,7 +11,13 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'] }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://ecommerce-website-7kw2beq14-bluesky2609s-projects.vercel.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
