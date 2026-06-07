@@ -18,8 +18,117 @@ const slugify = (str) =>
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const choice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const PLACEHOLDER = (w = 600, h = 800, label = 'HODY') =>
-  `https://placehold.co/${w}x${h}/e8e8e8/555555?text=${encodeURIComponent(label)}`;
+const UNSPLASH_IMAGES = {
+  'ao-nam': [
+    'photo-1622445275463-afa2ab738c34',
+    'photo-1625910513969-4dcaf428e5fe',
+    'photo-1586363104862-3a5e2ab60d99',
+    'photo-1588359348347-9bc6cbbb689e',
+    'photo-1521572163474-6864f9cf17ab',
+    'photo-1583743814966-8936f5b7be1a',
+    'photo-1576566588028-4147f3842f27',
+    'photo-1562157873-818bc0726f68',
+    'photo-1618354691373-d851c5c3a990',
+    'photo-1596755094514-f87e34085b2c',
+    'photo-1603252109303-2751441dd157',
+    'photo-1602810318383-e386cc2a3ccf',
+    'photo-1593032465175-481ac7f401a0'
+  ],
+  'ao-khoac-nam': [
+    'photo-1551028719-00167b16eac5',
+    'photo-1608063615781-e2ef8c73d114',
+    'photo-1591047139829-d91aecb6caea',
+    'photo-1544923246-77307dd270ce',
+    'photo-1483985988355-763728e1935b',
+    'photo-1551488831-00ddcb6c6bd3'
+  ],
+  'quan-nam': [
+    'photo-1542272604-787c3835535d',
+    'photo-1473966968600-fa801b869a1a',
+    'photo-1624378439575-d8705ad7ae80',
+    'photo-1541099649105-f69ad21f3246',
+    'photo-1591195853828-11db59a44f6b',
+    'photo-1560243563-062bfc001d68'
+  ],
+  'do-the-thao-nam': [
+    'photo-1517838277536-f5f99be501cd',
+    'photo-1476480862126-209bfaa8edc8',
+    'photo-1506126613408-eca07ce68773',
+    'photo-1518310383802-640c2de311b2',
+    'photo-1534438327276-14e5300c3a48'
+  ],
+  'ao-nu': [
+    'photo-1586790170083-2f9ceadc732d',
+    'photo-1618354691229-88d47f285158',
+    'photo-1594938298603-c8148c4dae35',
+    'photo-1583496661160-fb5886a0aaaa',
+    'photo-1554568218-0f1715e72254',
+    'photo-1503342217505-b0a15ec3261c',
+    'photo-1602810318383-e386cc2a3ccf',
+    'photo-1556821840-3a63f95609a7',
+    'photo-1578768079470-0a4536cc4e03'
+  ],
+  'quan-nu': [
+    'photo-1541099649105-f69ad21f3246',
+    'photo-1604176354204-9268737828e4',
+    'photo-1584308666744-24d5c474f2ae',
+    'photo-1509631179647-0177331693ae',
+    'photo-1485462537746-965f33f7f6a7'
+  ],
+  'vay-dam': [
+    'photo-1515372039744-b8f02a3ae446',
+    'photo-1566479179817-073e36a7e0d2',
+    'photo-1572804013309-59a88b7e92f1',
+    'photo-1614786269829-d24616faf56d',
+    'photo-1595777457583-95e059d581b8',
+    'photo-1496747611176-843222e1e57c'
+  ],
+  'ao-tre-em': [
+    'photo-1519238263530-99bdd11df2ea',
+    'photo-1503944583220-79d8926ad5e2',
+    'photo-1622290291468-a28f7a7dc6a8',
+    'photo-1471286174890-9c112ffca5b4',
+    'photo-1519457431-44ccd64a579b',
+    'photo-1514090458221-65bb69cf63e6'
+  ],
+  'quan-tre-em': [
+    'photo-1622290291468-a28f7a7dc6a8',
+    'photo-1519457431-44ccd64a579b',
+    'photo-1503944583220-79d8926ad5e2',
+    'photo-1519238263530-99bdd11df2ea'
+  ],
+  'mu-non': [
+    'photo-1576871337622-98d48d1cf531',
+    'photo-1556306535-0f09a537f0a3',
+    'photo-1588850561407-ed78c334e67a',
+    'photo-1521369909029-2afed882baee'
+  ],
+  'tui-ba-lo': [
+    'photo-1553062407-98eeb64c6a62',
+    'photo-1547949003-9792a18a2601',
+    'photo-1584917865442-de89df76afd3',
+    'photo-1590874103328-eac38a683ce7'
+  ]
+};
+
+const getHashCode = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+};
+
+const getUnsplashImages = (catSlug, seedString, count = 2) => {
+  const pool = UNSPLASH_IMAGES[catSlug] || UNSPLASH_IMAGES['ao-nam'];
+  const hash = getHashCode(seedString);
+  const images = [];
+  for (let i = 0; i < count; i++) {
+    const imgId = pool[(hash + i) % pool.length];
+    images.push(`https://images.unsplash.com/${imgId}?w=600&h=800&fit=crop&q=80`);
+  }
+  return images;
+};
 
 const COLORS_MALE = [
   { id: 'white', name: 'Trắng', hex: '#FFFFFF' },
@@ -74,11 +183,6 @@ const makeVariants = (colors, sizes) =>
   );
 
 const pickColors = (pool, n) => pool.slice(0, n);
-
-const makeImages = (label) => [
-  PLACEHOLDER(600, 800, label),
-  PLACEHOLDER(600, 800, label + ' 2'),
-];
 
 // ── Product definitions (scraped from yody.vn) ──────────────────────────────
 // Format: [name, originalPrice, salePrice, catSlug, sizes, colorPool, tags, isNew, isBestSeller, isFeatured]
@@ -272,16 +376,16 @@ const seed = async () => {
       slug,
       description: `${name} - Sản phẩm chất lượng cao từ HODY. Chất liệu cao cấp, thiết kế hiện đại, phù hợp nhiều phong cách.`,
       category: catMap[catSlug],
-      images: makeImages(name.split(' ').slice(0, 3).join(' ')),
-      colors: colors.map((c) => ({ id: c.id, name: c.name, hex: c.hex, images: makeImages(c.name) })),
+      images: getUnsplashImages(catSlug, name, 2),
+      colors: colors.map((c) => ({ id: c.id, name: c.name, hex: c.hex, images: getUnsplashImages(catSlug, name + ' ' + c.name, 2) })),
       sizes,
       variants: makeVariants(colors, sizes),
       originalPrice,
       salePrice,
       discount,
-      rating: parseFloat((3.5 + Math.random() * 1.5).toFixed(1)),
-      reviewCount: rand(10, 500),
-      sold: rand(0, 2000),
+      rating: 0,
+      reviewCount: 0,
+      sold: 0,
       isNew,
       isBestSeller,
       isFeatured,

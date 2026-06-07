@@ -42,6 +42,7 @@ const ProductsAdminPage = () => {
   const [saving, setSaving] = useState(false)
   const [priceError, setPriceError] = useState('')
   const [search, setSearch] = useState('')
+  const [selectedParentId, setSelectedParentId] = useState('')
   const [filterCat, setFilterCat] = useState('')
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 })
@@ -90,15 +91,29 @@ const ProductsAdminPage = () => {
   const openAdd = () => {
     setEditing(null)
     setForm(emptyForm)
+    setSelectedParentId('')
     setShowModal(true)
   }
 
   const openEdit = (p) => {
+    const catId = p.category?._id || p.category || ''
+    let parentId = ''
+    for (const parent of categories) {
+      if (parent._id === catId) {
+        parentId = catId
+        break
+      }
+      if (parent.children && parent.children.some(child => child._id === catId)) {
+        parentId = parent._id
+        break
+      }
+    }
+
     setEditing(p)
     setForm({
       name: p.name || '',
       description: p.description || '',
-      category: p.category?._id || p.category || '',
+      category: catId,
       images: (p.images || []).join(', '),
       originalPrice: p.originalPrice || '',
       salePrice: p.salePrice || '',
@@ -113,6 +128,7 @@ const ProductsAdminPage = () => {
       colors: p.colors || [],
       variants: p.variants || [],
     })
+    setSelectedParentId(parentId)
     setShowModal(true)
   }
 
@@ -257,7 +273,14 @@ const ProductsAdminPage = () => {
           style={{ padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', color: '#1f2937', background: 'white', outline: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', minWidth: '160px' }}
         >
           <option value="">Tất cả danh mục</option>
-          {categories.map(c => <option key={c._id} value={c.slug}>{c.name}</option>)}
+          {categories.map(c => (
+            <React.Fragment key={c._id}>
+              <option value={c.slug} style={{ fontWeight: 'bold' }}>{c.name}</option>
+              {c.children?.map(sub => (
+                <option key={sub._id} value={sub.slug}>&nbsp;&nbsp;— {sub.name}</option>
+              ))}
+            </React.Fragment>
+          ))}
         </select>
       </div>
 
@@ -398,12 +421,33 @@ const ProductsAdminPage = () => {
                   <input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Danh mục <span style={{ color: '#E31837' }}>*</span></label>
-                  <select required value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} style={{ ...inputStyle, background: 'white' }}>
-                    <option value="">— Chọn danh mục —</option>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Danh mục lớn <span style={{ color: '#E31837' }}>*</span></label>
+                  <select required value={selectedParentId} onChange={e => {
+                    const pId = e.target.value;
+                    setSelectedParentId(pId);
+                    setForm(prev => ({ ...prev, category: pId }));
+                  }} style={{ ...inputStyle, background: 'white' }}>
+                    <option value="">— Chọn danh mục lớn —</option>
                     {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                   </select>
                 </div>
+                {selectedParentId && (() => {
+                  const parentCat = categories.find(c => c._id === selectedParentId);
+                  const subCats = parentCat?.children || [];
+                  if (subCats.length === 0) return null;
+                  return (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Danh mục con</label>
+                      <select value={form.category === selectedParentId ? '' : form.category} onChange={e => {
+                        const subId = e.target.value;
+                        setForm(prev => ({ ...prev, category: subId || selectedParentId }));
+                      }} style={{ ...inputStyle, background: 'white' }}>
+                        <option value="">— Chọn danh mục con (tất cả) —</option>
+                        {subCats.map(sub => <option key={sub._id} value={sub._id}>{sub.name}</option>)}
+                      </select>
+                    </div>
+                  );
+                })()}
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Mô tả</label>
                   <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inputStyle, resize: 'vertical' }} onFocus={e => e.target.style.borderColor = '#E31837'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />

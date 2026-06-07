@@ -19,7 +19,18 @@ router.get('/', async (req, res, next) => {
     }
     if (category) {
       const cat = await Category.findOne({ slug: category });
-      if (cat) filter.category = cat._id;
+      if (cat) {
+        const getAllDescendantIds = async (parentId) => {
+          const children = await Category.find({ parent: parentId }).select('_id');
+          if (children.length === 0) return [];
+          const childIds = children.map((c) => c._id);
+          const deeperIds = await Promise.all(childIds.map(getAllDescendantIds));
+          return [...childIds, ...deeperIds.flat()];
+        };
+        const descendantIds = await getAllDescendantIds(cat._id);
+        const catIds = [cat._id, ...descendantIds];
+        filter.category = { $in: catIds };
+      }
     }
     const skip = (Number(page) - 1) * Number(limit);
     const [products, total] = await Promise.all([
