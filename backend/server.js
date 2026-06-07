@@ -14,8 +14,9 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://ecommerce-website-7kw2beq14-bluesky2609s-projects.vercel.app'
-  ],
+    'http://localhost:3000',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true
 }));
 app.use(express.json());

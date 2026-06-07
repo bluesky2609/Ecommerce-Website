@@ -3,8 +3,9 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 
 // Initialize Groq AI (free tier, very fast - Llama-3.3-70b)
+// Prevent server startup crash if GROQ_API_KEY is not defined in environments like Render
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: process.env.GROQ_API_KEY || 'placeholder_key_to_prevent_startup_crash',
 });
 
 // Store policies and FAQ information
